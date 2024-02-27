@@ -63,7 +63,7 @@ def checkout(request,plan_id):
 
 
 
-stripe.api_key = 'sk_test_51OneAfSDOw9wLjPghPeFNlTQNuFgQc3Ew0phDL8ZRagc4aQZOb9X8hX2OeakyzbHwNhiVlqz1B6KL3uajFmJl1bv00JZrCa457' 
+stripe.api_key = 'YOUR API KEY' 
 
 def checkout_session(request,plan_id):
     plan = models.SubPlan.objects.get(pk = plan_id)
