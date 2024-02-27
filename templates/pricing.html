@@ -1,0 +1,52 @@
+{% extends 'base.html' %} {%block start%}
+<!-- Main Start -->
+<section class="container my-4">
+	<h1 class="text-center mb-4 section-heading border-bottom pb-2">Plans</h1>
+	<main>
+		<div class="row row-cols-1 row-cols-md-3 mb-3 text-center">
+			{% for plan in plans %}
+			<div class="col">
+				<div class="card mb-4 rounded-3 shadow-sm">
+					<div class="card-header py-3">
+						<h4 class="my-0 fw-normal">{{plan.title}}</h4>
+					</div>
+					<div class="card-body">
+						<h1 class="card-title pricing-card-title">
+							Rs.{{plan.price}}<small class="text-muted fw-light"
+								>/mo</small
+							>
+						</h1>
+						<p class = "text-success">Maximum Capacity : {{plan.max_member}}</p>
+						<ul class="list-unstyled mt-3 mb-4">
+							{% for feature in plan.subplanfeature_set.all %}
+							<li>{{feature.title}}</li>
+							{% endfor %}
+						</ul>
+						{% if request.user.is_authenticated %}
+						<a
+							href="{%url 'checkout' plan.id%}"
+							class="w-100 btn btn-lg btn-outline-warning text-dark"
+							>Get started</a
+						>
+						{% else %}
+						<a
+							href="{% url 'login' %}"
+							class="w-100 btn btn-lg btn btn-warning text-light bg-dark"
+							>Get started</a
+						>
+						{% endif %}
+					</div>
+				</div>
+				
+			</div>
+
+			{% endfor %}
+
+			  <!-- Razorpay's Javascript code. -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+		</div>
+	</main>
+</section>
+<!-- End -->
+{% endblock %}

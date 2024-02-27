@@ -1,0 +1,114 @@
+{% extends 'base.html' %} {%block start%}
+<!-- Main Start -->
+<main>
+	<!-- banner Start -->
+	<div
+		id="carouselExampleControls"
+		class="carousel slide"
+		data-bs-ride="carousel"
+	>
+		<div class="carousel-inner">
+			{% for banner in banners %}
+			<div
+				class="carousel-item {%if forloop.counter == 1%} active {% endif %}"
+			>
+				<img
+					src="{{banner.img.url}}"
+					class="d-block w-100 h-100"
+					alt="Slide 1"
+				/>
+			</div>
+			{% endfor %}
+		</div>
+		<button
+			class="carousel-control-prev"
+			type="button"
+			data-bs-target="#carouselExampleControls"
+			data-bs-slide="prev"
+		>
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Previous</span>
+		</button>
+		<button
+			class="carousel-control-next"
+			type="button"
+			data-bs-target="#carouselExampleControls"
+			data-bs-slide="next"
+		>
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Next</span>
+		</button>
+	</div>
+	<!-- End Banner -->
+	<!-- Services -->
+	<section class="container my-4">
+		<h1 class="text-center mb-4 section-heading">Services</h1>
+		<div class="row">
+			{% for service in services %}
+			<div class="col-md-4 mb-4">
+				<div class="card ">
+					<img
+						src="{{service.img.url}}"
+						class="card-img-top"
+						alt="..."
+					/>
+					<div class="card-body">
+						<h3 class="card-title">{{service.title}}</h3>
+						<p class="card-text">{{service.details}}</p>
+						<a href="#" class="btn btn-warning text-light bg-dark ">Read More</a>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+	</section>
+	<!-- End -->
+
+	<!-- Testimonials -->
+	<section
+		class="container-fluid bg-light py-4 mt-5 border-top border-bottom"
+	>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-5">
+					{% for page in pagess %} {% if forloop.first %}
+					<h1 class="mb-4 section-heading">{{page.title}}</h1>
+					<p class="lh-base">{{page.details}}</p>
+					<p>
+						<a
+							href="{%url 'pagedetails' 1 %}"
+							class="btn btn-warning text-light bg-dark"
+							>Read More</a
+						>
+					</p>
+					{% endif %} {% endfor %}
+				</div>
+				<div class="col-md-6 offset-1">
+					<h1 class="mb-4 section-heading">
+						Gallery
+						<a
+							href="#"
+							class="float-end btn btn-warning text-light bg-dark mt-2"
+							>View All</a
+						>
+					</h1>
+					<div class="gallery">
+						{% for gimg in gimg %}
+						<a data-lightbox="home-gallery" href="#"
+							><img
+								src="{{gimg.img.url}}"
+								width="155"
+								class="img-thumbnail"
+								alt="...{{gimg.img.alt_text}}"
+						/></a>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- End Testimonials -->
+</main>
+<!-- End -->
+
+{% endblock %}
