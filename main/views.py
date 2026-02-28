@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 import stripe
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.http import HttpResponse
 
 
 # Create your views here.
@@ -60,74 +63,99 @@ def checkout(request,plan_id):
     plandetail = models.SubPlan.objects.get(id=plan_id)
     return render(request, 'checkout.html', {'plans' : plandetail, 'page_name' : 'Check Out Page'})
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+@login_required
+def checkout_session(request, plan_id):
+    plan = models.SubPlan.objects.get(pk=plan_id)
 
-stripe.api_key = 'YOUR API KEY' 
-
-def checkout_session(request,plan_id):
-    plan = models.SubPlan.objects.get(pk = plan_id)
     try:
-     session = stripe.checkout.Session.create(
-        payment_method_types = ['card'],
-         line_items=[
-             {
-                    'price_data': {
-                        'currency' : 'inr',
-                            'product_data' : {
-                                'name' : plan.title
-                            },
-                            'unit_amount' : plan.price*100,
-                        },
-                        'quantity': 1,
-                    }
-             ],
-                mode='payment',
-                success_url='http://127.0.0.1:8000/pay_success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url= 'http://127.0.0.1:8000//pay_failure', 
-                client_reference_id=plan_id
-                    )
-    
-    except Exception as e:
-        return str(e)
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'inr',
+                    'product_data': {
+                        'name': plan.title,
+                    },
+                    'unit_amount': int(plan.price * 100),
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=request.build_absolute_uri(
+                '/pay_success?session_id={CHECKOUT_SESSION_ID}'
+            ),
+            cancel_url=request.build_absolute_uri('/pay_failure'),
+            client_reference_id=plan_id,
+        )
 
-    
+    except Exception as e:
+        return HttpResponse(str(e))
+
     return redirect(session.url, code=303)
 
-# success
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.conf import settings
+
+@login_required
 def pay_success(request):
-    session = stripe.checkout.Session.retrieve(request.GET['session_id'])
+    session_id = request.GET.get('session_id')
+
+    if not session_id:
+        return redirect('home')
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception:
+        return render(request, 'failure.html', {'page_name': 'Payment Failure Page'})
+
+    # ✅ Verify payment status
+    if session.payment_status != "paid":
+        return render(request, 'failure.html', {'page_name': 'Payment Failure Page'})
+
     plan_id = session.client_reference_id
     plan = models.SubPlan.objects.get(pk=plan_id)
     user = request.user
-    models.Subscription.objects.create(
-        plan = plan,
-        user = user,
-        price =plan.price,
-    )
-    
-    msg_plain = render_to_string('email.txt')
-    msg_html = render_to_string('orderemail.html')
-    
-    send_mail("Your booking has been Successful", msg_plain, settings.EMAIL_HOST_USER,
-                              ['sameer2002.ms@gmail.com'], html_message = msg_html)
-    
-    
-    return render(request,'success.html', {'page_name' : 'Payment Success Page'})
+
+    # ✅ Prevent duplicate subscriptions
+    subscription_exists = models.Subscription.objects.filter(
+        user=user,
+        plan=plan
+    ).exists()
+
+    if not subscription_exists:
+        models.Subscription.objects.create(
+            plan=plan,
+            user=user,
+            price=plan.price,
+        )
+
+        # Send email only on first successful creation
+        msg_plain = render_to_string('email.txt')
+        msg_html = render_to_string('orderemail.html')
+
+        send_mail(
+            "Your booking has been Successful",
+            msg_plain,
+            settings.EMAIL_HOST_USER,
+            [user.email],  # ✅ Send to actual user
+            html_message=msg_html
+        )
+
+    return render(request, 'success.html', {'page_name': 'Payment Success Page'})
+
 
 def pay_failure(request):
-    return render(request, 'failure.html', {'page_name' : 'Payment Failure Page'})
+    return render(request, 'failure.html', {'page_name': 'Payment Failure Page'})
 
 
+@login_required
 def profile_detail(request):
     user = request.user
-    first_user = request.user.id
-    plans = models.Subscription.objects.filter(id = first_user)
-    
-    
-    return render(request, 'profile_detail.html', {'user':user, "plan" : plans,'page_name' : 'Profile Detail Page'})
+    plans = models.Subscription.objects.filter(user=user)
 
-       
+    return render(request, 'profile_detail.html', {
+        'user': user,
+        "plan": plans,
+        'page_name': 'Profile Detail Page'
+    })

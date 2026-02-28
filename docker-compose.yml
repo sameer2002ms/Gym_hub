@@ -1,0 +1,93 @@
+# services:
+#   db:
+#     restart: always
+#     image: sq:16.4-alpine3.20
+#     container_name: ravid_Database
+#     env_file:
+#       - .env
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - ./init-db:/docker-entrypoint-initdb.d
+#       - postgres_data:/var/lib/postgresql/data
+#     networks:
+#       - ravid_network
+
+
+#   # pgadmin:
+#   #   image: dpage/pgadmin4
+#   #   container_name: ravid_pgadmin
+#   #   env_file:
+#   #     - .env
+#   #   ports:
+#   #     - "8080:80"
+#   #   volumes:
+#   #     - ./pgadmin:/var/lib/pgadmin
+#   #   networks:
+#   #     - ravid_network
+
+
+#   web:
+#     restart: always
+#     build:
+#       context: .
+#     command: >
+#       bash -c "
+#               python manage.py makemigrations &&
+#               python manage.py migrate &&
+#               python manage.py create_default_roles &&
+#               python manage.py runserver 0.0.0.0:8000"
+#     volumes:
+#       - .:/app
+#     ports:
+#       - "8000:8000"
+#     env_file:
+#       - .env
+#     depends_on:
+#       - db
+#       - postfix
+#     networks:
+#       - ravid_network
+  
+#   # postfix:  # Postfix container
+#   #   image: boky/postfix  # You can use a ready-made Postfix Docker image or build your own
+#   #   env_file:
+#   #     - .env
+#   #   networks:
+#   #     - ravid_network
+#   #   ports:
+#   #     - "25:25"
+#   #   volumes:
+#   #     - ./postfix/:/etc/postfix/  # Mount the credentials file
+
+# networks:
+#   ravid_network:
+
+# volumes:
+#   postgres_data:
+
+
+
+version: "3.8"
+
+services:
+  web:
+    restart: always
+    build:
+      context: .
+    command: >
+      bash -c "
+        python manage.py makemigrations &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - ravid_network
+
+networks:
+  ravid_network:

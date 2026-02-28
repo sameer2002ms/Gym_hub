@@ -125,5 +125,8 @@ class Subscription(models.Model):
         user = models.ForeignKey(User, on_delete=models.CASCADE, null =True)
         plan = models.ForeignKey(SubPlan, on_delete=models.CASCADE, null =True)
         price = models.CharField(max_length= 50, null = True)
+        
+        class Meta:
+            unique_together = ('user', 'plan')
 
 
